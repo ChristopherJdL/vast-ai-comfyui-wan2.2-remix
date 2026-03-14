@@ -72,6 +72,7 @@ pip install -r "$CUSTOM_NODES/rgthree-comfy/requirements.txt"              -q
 if [ -f "$CUSTOM_NODES/ComfyUI-KJNodes/requirements.txt" ]; then
     pip install -r "$CUSTOM_NODES/ComfyUI-KJNodes/requirements.txt" -q
 fi
+pip install librosa soundfile -q
 success "Custom nodes installed."
 
 # ── 7. Create model directories ──────────────────────────────────────────────
@@ -122,10 +123,10 @@ hf_download "NSFW-API/NSFW-Wan-UMT5-XXL" \
     "nsfw_wan_umt5-xxl_fp8_scaled.safetensors" \
     "$INSTALL_DIR/models/text_encoders"
 
-# VAE from the official Wan2.1 repo
-VAE_DEST="$INSTALL_DIR/models/vae/wan_2.1_vae.safetensors"
+# VAE from the official Wan2.1 repo (provided as .pth)
+VAE_DEST="$INSTALL_DIR/models/vae/wan_2.1_vae.pth"
 if [ -f "$VAE_DEST" ]; then
-    warn "wan_2.1_vae.safetensors already exists — skipping."
+    warn "wan_2.1_vae.pth already exists — skipping."
 else
     info "Downloading Wan2.1 VAE..."
     python -c "
@@ -138,6 +139,12 @@ hf_hub_download(
 )
 "
     mv "$INSTALL_DIR/models/vae/Wan2.1_VAE.pth" "$VAE_DEST" 2>/dev/null || true
+fi
+
+# Sanity check: auto-rename .safetensors to .pth for this VAE
+if [ -f "$INSTALL_DIR/models/vae/wan_2.1_vae.safetensors" ] && [ ! -f "$INSTALL_DIR/models/vae/wan_2.1_vae.pth" ]; then
+    warn "Found wan_2.1_vae.safetensors — renaming to wan_2.1_vae.pth (this VAE is a .pth file)."
+    mv "$INSTALL_DIR/models/vae/wan_2.1_vae.safetensors" "$INSTALL_DIR/models/vae/wan_2.1_vae.pth"
 fi
 
 deactivate
