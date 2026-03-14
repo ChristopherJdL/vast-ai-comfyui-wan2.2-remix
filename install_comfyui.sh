@@ -135,12 +135,12 @@ hf_download "NSFW-API/NSFW-Wan-UMT5-XXL" \
     "nsfw_wan_umt5-xxl_fp8_scaled.safetensors" \
     "$INSTALL_DIR/models/text_encoders"
 
-# VAE from the official Wan2.1 repo (provided as .pth)
-VAE_DEST="$INSTALL_DIR/models/vae/wan_2.1_vae.pth"
-if [ -f "$VAE_DEST" ]; then
+# VAE from the official Wan2.1 repo (.pth)
+VAE_PTH="$INSTALL_DIR/models/vae/wan_2.1_vae.pth"
+if [ -f "$VAE_PTH" ]; then
     warn "wan_2.1_vae.pth already exists — skipping."
 else
-    info "Downloading Wan2.1 VAE..."
+    info "Downloading Wan2.1 VAE (.pth)..."
     python -c "
 from huggingface_hub import hf_hub_download
 hf_hub_download(
@@ -150,13 +150,30 @@ hf_hub_download(
     token='$HF_TOKEN',
 )
 "
-    mv "$INSTALL_DIR/models/vae/Wan2.1_VAE.pth" "$VAE_DEST" 2>/dev/null || true
+    mv "$INSTALL_DIR/models/vae/Wan2.1_VAE.pth" "$VAE_PTH" 2>/dev/null || true
 fi
 
-# Sanity check: auto-rename .safetensors to .pth for this VAE
-if [ -f "$INSTALL_DIR/models/vae/wan_2.1_vae.safetensors" ] && [ ! -f "$INSTALL_DIR/models/vae/wan_2.1_vae.pth" ]; then
-    warn "Found wan_2.1_vae.safetensors — renaming to wan_2.1_vae.pth (this VAE is a .pth file)."
-    mv "$INSTALL_DIR/models/vae/wan_2.1_vae.safetensors" "$INSTALL_DIR/models/vae/wan_2.1_vae.pth"
+# VAE in .safetensors (ComfyUI repackaged)
+VAE_SAFE="$INSTALL_DIR/models/vae/wan_2.1_vae.safetensors"
+if [ -f "$VAE_SAFE" ]; then
+    warn "wan_2.1_vae.safetensors already exists — skipping."
+else
+    info "Downloading Wan2.1 VAE (.safetensors)..."
+    python -c "
+from huggingface_hub import hf_hub_download
+hf_hub_download(
+    repo_id='Comfy-Org/Wan_2.2_ComfyUI_Repackaged',
+    filename='split_files/vae/wan_2.1_vae.safetensors',
+    local_dir='$INSTALL_DIR/models/vae',
+    token='$HF_TOKEN',
+)
+"
+    # flatten the path if nested
+    if [ -f \"$INSTALL_DIR/models/vae/split_files/vae/wan_2.1_vae.safetensors\" ]; then
+        mv \"$INSTALL_DIR/models/vae/split_files/vae/wan_2.1_vae.safetensors\" \"$VAE_SAFE\" 2>/dev/null || true
+        rmdir \"$INSTALL_DIR/models/vae/split_files/vae\" 2>/dev/null || true
+        rmdir \"$INSTALL_DIR/models/vae/split_files\" 2>/dev/null || true
+    fi
 fi
 
 deactivate
