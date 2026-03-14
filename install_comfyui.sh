@@ -77,9 +77,31 @@ mkdir -p "$INSTALL_DIR/models/clip_vision"
 [ -n "${HF_TOKEN:-}" ] || error "HF_TOKEN env var is not set. Export it before running this script (https://huggingface.co/settings/tokens)."
 
 info "Installing huggingface_hub CLI..."
-pip install -U huggingface_hub -q
+pip install -U huggingface_hub
+info "pip install exit code: $?"
+info "huggingface_hub version: $(pip show huggingface_hub | grep Version)"
+info "Searching for huggingface-cli binary..."
+which huggingface-cli 2>&1 || info "which huggingface-cli: not found"
+find "$INSTALL_DIR/venv" -name "huggingface*" -type f 2>/dev/null | head -20 || true
+info "Listing venv/bin:"
+ls -la "$INSTALL_DIR/venv/bin/" | grep -i hug || info "No hug* files in venv/bin"
+info "Checking pip scripts:"
+pip show -f huggingface_hub 2>/dev/null | grep -i cli || info "No cli entries in pip show"
+info "Python path: $(which python)"
+info "Pip path: $(which pip)"
+info "Trying python -c import..."
+python -c "import huggingface_hub; print('huggingface_hub location:', huggingface_hub.__file__)" 2>&1 || true
+python -c "from huggingface_hub.cli import main; print('CLI module found')" 2>&1 || info "CLI module not importable"
+
 HF_CLI="$INSTALL_DIR/venv/bin/huggingface-cli"
-[ -x "$HF_CLI" ] || error "huggingface-cli not found at $HF_CLI after install."
+if [ ! -x "$HF_CLI" ]; then
+    warn "huggingface-cli not found at $HF_CLI, trying PATH..."
+    HF_CLI=$(which huggingface-cli 2>/dev/null || true)
+    if [ -z "$HF_CLI" ]; then
+        error "huggingface-cli not found anywhere. See debug output above."
+    fi
+fi
+info "Using HF_CLI=$HF_CLI"
 
 # ── 9. Download models ────────────────────────────────────────────────────────
 info "Downloading Wan2.2 Remix models (very large files — ~30 GB total)..."
