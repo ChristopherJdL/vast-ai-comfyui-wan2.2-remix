@@ -52,8 +52,12 @@ CUSTOM_NODES="$INSTALL_DIR/custom_nodes"
 clone_or_pull() {
     local repo="$1" dir="$2"
     if [ -d "$dir" ]; then
-        warn "$(basename $dir) already exists — pulling latest."
-        git -C "$dir" pull -q
+        if [ "${SKIP_PULL:-0}" = "1" ]; then
+            warn "$(basename $dir) already exists — skipping pull (SKIP_PULL=1)."
+        else
+            warn "$(basename $dir) already exists — pulling latest."
+            GIT_TERMINAL_PROMPT=0 git -C "$dir" pull -q
+        fi
     else
         git clone "$repo" "$dir" -q
     fi
