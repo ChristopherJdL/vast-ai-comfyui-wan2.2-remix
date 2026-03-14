@@ -77,7 +77,9 @@ mkdir -p "$INSTALL_DIR/models/clip_vision"
 [ -n "${HF_TOKEN:-}" ] || error "HF_TOKEN env var is not set. Export it before running this script (https://huggingface.co/settings/tokens)."
 
 info "Installing huggingface_hub CLI..."
-pip install -U "huggingface_hub[cli]" -q
+pip install -U huggingface_hub -q
+HF_CLI="$INSTALL_DIR/venv/bin/huggingface-cli"
+[ -x "$HF_CLI" ] || error "huggingface-cli not found at $HF_CLI after install."
 
 # ── 9. Download models ────────────────────────────────────────────────────────
 info "Downloading Wan2.2 Remix models (very large files — ~30 GB total)..."
@@ -91,7 +93,7 @@ download_model() {
         warn "$filename already exists — skipping download."
     else
         info "Downloading $filename..."
-        python -m huggingface_hub.cli.main download "$HF_REPO" "$hf_path"             --local-dir "$INSTALL_DIR/models/$subdir"             --local-dir-use-symlinks False             --token "$HF_TOKEN"
+        "$HF_CLI" download "$HF_REPO" "$hf_path"             --local-dir "$INSTALL_DIR/models/$subdir"             --local-dir-use-symlinks False             --token "$HF_TOKEN"
     fi
 }
 
@@ -107,7 +109,7 @@ if [ -f "$VAE_DEST" ]; then
     warn "wan_2.1_vae.safetensors already exists — skipping."
 else
     info "Downloading Wan2.1 VAE..."
-    python -m huggingface_hub.cli.main download Wan-AI/Wan2.1-T2V-14B         "Wan2.1_VAE.pth"         --local-dir "$INSTALL_DIR/models/vae"         --local-dir-use-symlinks False         --token "$HF_TOKEN"
+    "$HF_CLI" download Wan-AI/Wan2.1-T2V-14B         "Wan2.1_VAE.pth"         --local-dir "$INSTALL_DIR/models/vae"         --local-dir-use-symlinks False         --token "$HF_TOKEN"
     mv "$INSTALL_DIR/models/vae/Wan2.1_VAE.pth" "$VAE_DEST" 2>/dev/null || true
 fi
 
