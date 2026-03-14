@@ -73,57 +73,48 @@ mkdir -p "$INSTALL_DIR/models/text_encoders"
 mkdir -p "$INSTALL_DIR/models/vae"
 mkdir -p "$INSTALL_DIR/models/clip_vision"
 
-# ── 8. HuggingFace token & CLI ───────────────────────────────────────────────
+# ── 8. HuggingFace token & library ────────────────────────────────────────────
 [ -n "${HF_TOKEN:-}" ] || error "HF_TOKEN env var is not set. Export it before running this script (https://huggingface.co/settings/tokens)."
 
-info "Installing huggingface_hub CLI..."
-pip install -U huggingface_hub
-info "pip install exit code: $?"
-info "huggingface_hub version: $(pip show huggingface_hub | grep Version)"
-info "Searching for huggingface-cli binary..."
-which huggingface-cli 2>&1 || info "which huggingface-cli: not found"
-find "$INSTALL_DIR/venv" -name "huggingface*" -type f 2>/dev/null | head -20 || true
-info "Listing venv/bin:"
-ls -la "$INSTALL_DIR/venv/bin/" | grep -i hug || info "No hug* files in venv/bin"
-info "Checking pip scripts:"
-pip show -f huggingface_hub 2>/dev/null | grep -i cli || info "No cli entries in pip show"
-info "Python path: $(which python)"
-info "Pip path: $(which pip)"
-info "Trying python -c import..."
-python -c "import huggingface_hub; print('huggingface_hub location:', huggingface_hub.__file__)" 2>&1 || true
-python -c "from huggingface_hub.cli import main; print('CLI module found')" 2>&1 || info "CLI module not importable"
+info "Installing huggingface_hub..."
+pip install -U huggingface_hub -q
 
-HF_CLI="$INSTALL_DIR/venv/bin/huggingface-cli"
-if [ ! -x "$HF_CLI" ]; then
-    warn "huggingface-cli not found at $HF_CLI, trying PATH..."
-    HF_CLI=$(which huggingface-cli 2>/dev/null || true)
-    if [ -z "$HF_CLI" ]; then
-        error "huggingface-cli not found anywhere. See debug output above."
-    fi
-fi
-info "Using HF_CLI=$HF_CLI"
-
-# ── 9. Download models ────────────────────────────────────────────────────────
+# ── 9. Download models (using Python API) ────────────────────────────────────
 info "Downloading Wan2.2 Remix models (very large files — ~30 GB total)..."
 
-HF_REPO="FX-FeiHou/wan2.2-Remix"
-
-download_model() {
-    local filename="$1" subdir="$2" hf_path="$3"
-    local dest="$INSTALL_DIR/models/$subdir/$filename"
+hf_download() {
+    local repo="$1" hf_path="$2" local_dir="$3" filename="$4"
+    local dest="$local_dir/$filename"
     if [ -f "$dest" ]; then
         warn "$filename already exists — skipping download."
     else
         info "Downloading $filename..."
-        "$HF_CLI" download "$HF_REPO" "$hf_path"             --local-dir "$INSTALL_DIR/models/$subdir"             --local-dir-use-symlinks False             --token "$HF_TOKEN"
+        python -c "
+from huggingface_hub import hf_hub_download
+hf_hub_download(
+    repo_id='$repo',
+    filename='$hf_path',
+    local_dir='$local_dir',
+    token='$HF_TOKEN',
+)
+"
     fi
 }
 
-download_model     "Wan2.2_Remix_NSFW_i2v_14b_high_lighting_v2.0.safetensors"     "diffusion_models"     "NSFW/Wan2.2_Remix_NSFW_i2v_14b_high_lighting_v2.0.safetensors"
+hf_download "FX-FeiHou/wan2.2-Remix" \
+    "NSFW/Wan2.2_Remix_NSFW_i2v_14b_high_lighting_v2.0.safetensors" \
+    "$INSTALL_DIR/models/diffusion_models" \
+    "NSFW/Wan2.2_Remix_NSFW_i2v_14b_high_lighting_v2.0.safetensors"
 
-download_model     "Wan2.2_Remix_NSFW_i2v_14b_low_lighting_v2.0.safetensors"     "diffusion_models"     "NSFW/Wan2.2_Remix_NSFW_i2v_14b_low_lighting_v2.0.safetensors"
+hf_download "FX-FeiHou/wan2.2-Remix" \
+    "NSFW/Wan2.2_Remix_NSFW_i2v_14b_low_lighting_v2.0.safetensors" \
+    "$INSTALL_DIR/models/diffusion_models" \
+    "NSFW/Wan2.2_Remix_NSFW_i2v_14b_low_lighting_v2.0.safetensors"
 
-download_model     "nsfw_wan_umt5-xxl_fp8_scaled.safetensors"     "text_encoders"     "NSFW/nsfw_wan_umt5-xxl_fp8_scaled.safetensors"
+hf_download "FX-FeiHou/wan2.2-Remix" \
+    "NSFW/nsfw_wan_umt5-xxl_fp8_scaled.safetensors" \
+    "$INSTALL_DIR/models/text_encoders" \
+    "NSFW/nsfw_wan_umt5-xxl_fp8_scaled.safetensors"
 
 # VAE from the official Wan2.1 repo
 VAE_DEST="$INSTALL_DIR/models/vae/wan_2.1_vae.safetensors"
@@ -131,7 +122,15 @@ if [ -f "$VAE_DEST" ]; then
     warn "wan_2.1_vae.safetensors already exists — skipping."
 else
     info "Downloading Wan2.1 VAE..."
-    "$HF_CLI" download Wan-AI/Wan2.1-T2V-14B         "Wan2.1_VAE.pth"         --local-dir "$INSTALL_DIR/models/vae"         --local-dir-use-symlinks False         --token "$HF_TOKEN"
+    python -c "
+from huggingface_hub import hf_hub_download
+hf_hub_download(
+    repo_id='Wan-AI/Wan2.1-T2V-14B',
+    filename='Wan2.1_VAE.pth',
+    local_dir='$INSTALL_DIR/models/vae',
+    token='$HF_TOKEN',
+)
+"
     mv "$INSTALL_DIR/models/vae/Wan2.1_VAE.pth" "$VAE_DEST" 2>/dev/null || true
 fi
 
