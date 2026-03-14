@@ -105,6 +105,13 @@ for service in "https://api.ipify.org" "https://ifconfig.me" "https://icanhazip.
     [ -n "$PUBLIC_IP" ] && break
 done
 
-log "Open: http://${PUBLIC_IP:-<unknown>}:${COMFYUI_PORT}"
-log "Local: http://127.0.0.1:${COMFYUI_PORT}"
-log "Stop:  kill \$(cat ${PID_FILE})"
+log ""
+log "${GREEN}============================================================${NC}"
+log "${GREEN}                  COMFYUI RELAUNCH READY                   ${NC}"
+log "${GREEN}============================================================${NC}"
+log "${CYAN}Public URL:${NC} http://${PUBLIC_IP:-<unknown>}:${COMFYUI_PORT}"
+log "${CYAN}Local URL :${NC} http://127.0.0.1:${COMFYUI_PORT}"
+log "${CYAN}PID file  :${NC} ${PID_FILE}"
+log "${CYAN}Logs      :${NC} ${LOG_FILE}"
+log "${CYAN}Stop      :${NC} kill \$(cat ${PID_FILE})"
+log "${GREEN}============================================================${NC}"
