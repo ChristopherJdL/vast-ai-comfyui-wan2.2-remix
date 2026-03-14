@@ -61,8 +61,8 @@ clone_or_pull() {
 
 clone_or_pull "https://github.com/kijai/ComfyUI-WanVideoWrapper"       "$CUSTOM_NODES/ComfyUI-WanVideoWrapper"
 clone_or_pull "https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite"  "$CUSTOM_NODES/ComfyUI-VideoHelperSuite"
-clone_or_pull "https://github.com/spacepxl/ComfyUI-FastUnsharpSharpen"   "$CUSTOM_NODES/ComfyUI-FastUnsharpSharpen"
-clone_or_pull "https://github.com/jamesWalker55/comfyui-various-nodes"   "$CUSTOM_NODES/comfyui-various-nodes"
+clone_or_pull "https://github.com/vrgamegirl19/comfyui-vrgamedevgirl"    "$CUSTOM_NODES/comfyui-vrgamedevgirl"
+clone_or_pull "https://github.com/jamesWalker55/comfyui-various"         "$CUSTOM_NODES/comfyui-various"
 clone_or_pull "https://github.com/rgthree/rgthree-comfy"                 "$CUSTOM_NODES/rgthree-comfy"
 
 pip install -r "$CUSTOM_NODES/ComfyUI-WanVideoWrapper/requirements.txt"   -q
