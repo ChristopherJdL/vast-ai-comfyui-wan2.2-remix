@@ -73,19 +73,11 @@ mkdir -p "$INSTALL_DIR/models/text_encoders"
 mkdir -p "$INSTALL_DIR/models/vae"
 mkdir -p "$INSTALL_DIR/models/clip_vision"
 
-# ── 8. HuggingFace CLI & token ───────────────────────────────────────────────
+# ── 8. HuggingFace token & CLI ───────────────────────────────────────────────
+[ -n "${HF_TOKEN:-}" ] || error "HF_TOKEN env var is not set. Export it before running this script (https://huggingface.co/settings/tokens)."
+
 info "Installing huggingface_hub CLI..."
 pip install -U "huggingface_hub[cli]" -q
-
-echo ""
-echo -e "${YELLOW}╔═══════════════════════════════════════════════════════════╗${NC}"
-echo -e "${YELLOW}║  A HuggingFace token is required to download the models.  ║${NC}"
-echo -e "${YELLOW}║  Generate one at https://huggingface.co/settings/tokens   ║${NC}"
-echo -e "${YELLOW}╚═══════════════════════════════════════════════════════════╝${NC}"
-echo ""
-read -rsp "Paste your HuggingFace token (input hidden): " HF_TOKEN
-echo ""
-export HF_TOKEN
 
 # ── 9. Download models ────────────────────────────────────────────────────────
 info "Downloading Wan2.2 Remix models (very large files — ~30 GB total)..."
