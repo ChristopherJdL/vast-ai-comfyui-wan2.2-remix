@@ -8,7 +8,7 @@ warn()    { echo -e "${YELLOW}[WARN]${NC}  $*"; }
 error()   { echo -e "${RED}[ERROR]${NC} $*"; exit 1; }
 
 INSTALL_DIR="/workspace/comfyui"
-COMFYUI_PORT=8188
+COMFYUI_PORT=40525
 LOG_FILE="${INSTALL_DIR}/comfyui.log"
 PID_FILE="${INSTALL_DIR}/comfyui.pid"
 
