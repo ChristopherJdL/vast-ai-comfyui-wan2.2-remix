@@ -64,10 +64,14 @@ clone_or_pull "https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite"  "$CUSTO
 clone_or_pull "https://github.com/vrgamegirl19/comfyui-vrgamedevgirl"    "$CUSTOM_NODES/comfyui-vrgamedevgirl"
 clone_or_pull "https://github.com/jamesWalker55/comfyui-various"         "$CUSTOM_NODES/comfyui-various"
 clone_or_pull "https://github.com/rgthree/rgthree-comfy"                 "$CUSTOM_NODES/rgthree-comfy"
+clone_or_pull "https://github.com/kijai/ComfyUI-KJNodes"                 "$CUSTOM_NODES/ComfyUI-KJNodes"
 
 pip install -r "$CUSTOM_NODES/ComfyUI-WanVideoWrapper/requirements.txt"   -q
 pip install -r "$CUSTOM_NODES/ComfyUI-VideoHelperSuite/requirements.txt"   -q
 pip install -r "$CUSTOM_NODES/rgthree-comfy/requirements.txt"              -q
+if [ -f "$CUSTOM_NODES/ComfyUI-KJNodes/requirements.txt" ]; then
+    pip install -r "$CUSTOM_NODES/ComfyUI-KJNodes/requirements.txt" -q
+fi
 success "Custom nodes installed."
 
 # ── 7. Create model directories ──────────────────────────────────────────────
