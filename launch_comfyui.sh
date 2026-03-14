@@ -67,26 +67,45 @@ until curl -s "http://127.0.0.1:${COMFYUI_PORT}" > /dev/null 2>&1; do
 done
 echo ""
 
-# ── Resolve public IP ─────────────────────────────────────────────────────────
-info "Resolving public IP..."
-PUBLIC_IP=""
-for service in "https://api.ipify.org" "https://ifconfig.me" "https://icanhazip.com"; do
-    PUBLIC_IP=$(curl -s --max-time 5 "$service" 2>/dev/null || true)
-    [ -n "$PUBLIC_IP" ] && break
-done
-PUBLIC_IP="${PUBLIC_IP:-"<could not resolve — check your VPS IP>"}"
+# ── Resolve access URL (Vast.ai uses proxy or mapped ports) ──────────────────
+info "Resolving access URL..."
 
-# ── Resolve mapped port (Vast.ai maps internal ports) ────────────────────────
-VAST_PORT="${VAST_TCP_PORT_8188:-8188}"
+VAST_PROXY_URL=""
+PUBLIC_URL=""
+
+# Method 1: Vast.ai proxy URL (most reliable)
+if [ -n "${CONTAINER_ID:-}" ]; then
+    VAST_PROXY_URL="https://${CONTAINER_ID}-${COMFYUI_PORT}.proxy.vast.ai/"
+fi
+
+# Method 2: Vast.ai public IP + mapped port
+PUBLIC_IP="${PUBLIC_IPADDR:-}"
+VAST_PORT="${VAST_TCP_PORT_8188:-}"
+if [ -n "$PUBLIC_IP" ] && [ -n "$VAST_PORT" ]; then
+    PUBLIC_URL="http://${PUBLIC_IP}:${VAST_PORT}"
+fi
+
+# Method 3: Fallback — resolve IP externally
+if [ -z "$PUBLIC_IP" ]; then
+    for service in "https://api.ipify.org" "https://ifconfig.me" "https://icanhazip.com"; do
+        PUBLIC_IP=$(curl -s --max-time 5 "$service" 2>/dev/null || true)
+        [ -n "$PUBLIC_IP" ] && break
+    done
+fi
 
 # ── Banner ────────────────────────────────────────────────────────────────────
 echo ""
 echo -e "${BOLD}${GREEN}╔══════════════════════════════════════════════════════════╗${NC}"
 echo -e "${BOLD}${GREEN}║              ComfyUI is UP and RUNNING                   ║${NC}"
 echo -e "${BOLD}${GREEN}╠══════════════════════════════════════════════════════════╣${NC}"
-echo -e "${BOLD}${GREEN}║${NC}  Public IP   : ${CYAN}${PUBLIC_IP}${NC}"
+if [ -n "$VAST_PROXY_URL" ]; then
+echo -e "${BOLD}${GREEN}║${NC}  Proxy URL   : ${CYAN}${VAST_PROXY_URL}${NC}"
+fi
+if [ -n "$PUBLIC_URL" ]; then
+echo -e "${BOLD}${GREEN}║${NC}  Public URL  : ${CYAN}${PUBLIC_URL}${NC}"
+fi
 echo -e "${BOLD}${GREEN}║${NC}  Local       : ${CYAN}http://127.0.0.1:${COMFYUI_PORT}${NC}"
-echo -e "${BOLD}${GREEN}║${NC}  Public URL  : ${CYAN}http://${PUBLIC_IP}:${VAST_PORT}${NC}"
+echo -e "${BOLD}${GREEN}║${NC}  Public IP   : ${CYAN}${PUBLIC_IP:-<unknown>}${NC}"
 echo -e "${BOLD}${GREEN}║${NC}  PID file    : ${PID_FILE}"
 echo -e "${BOLD}${GREEN}║${NC}  Logs        : tail -f ${LOG_FILE}"
 echo -e "${BOLD}${GREEN}╠══════════════════════════════════════════════════════════╣${NC}"
