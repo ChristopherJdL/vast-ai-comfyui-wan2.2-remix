@@ -31,17 +31,25 @@ cd "$INSTALL_DIR"
 info "Setting up Python virtual environment..."
 python3 -m venv venv
 source venv/bin/activate
-pip install --upgrade pip -q
+# Verbosity control
+PIP_QUIET_FLAG="-q"
+GIT_QUIET_FLAG="-q"
+if [ "${DEBUG:-0}" = "1" ]; then
+    PIP_QUIET_FLAG=""
+    GIT_QUIET_FLAG=""
+fi
+
+pip install --upgrade pip $PIP_QUIET_FLAG
 success "Virtual environment ready."
 
 # ── 4. PyTorch (CUDA 12.1) ───────────────────────────────────────────────────
 info "Installing PyTorch with CUDA 12.1 support (this may take a few minutes)..."
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121 -q
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121 $PIP_QUIET_FLAG
 success "PyTorch installed."
 
 # ── 5. ComfyUI requirements ───────────────────────────────────────────────────
 info "Installing ComfyUI requirements..."
-pip install -r requirements.txt -q
+pip install -r requirements.txt $PIP_QUIET_FLAG
 success "ComfyUI requirements installed."
 
 # ── 6. Custom nodes ───────────────────────────────────────────────────────────
@@ -54,12 +62,12 @@ clone_or_pull() {
     if [ -d "$dir" ]; then
         if [ "${PULL_LATEST:-0}" = "1" ]; then
             warn "$(basename $dir) already exists — pulling latest (PULL_LATEST=1)."
-            GIT_TERMINAL_PROMPT=0 git -C "$dir" pull -q
+            GIT_TERMINAL_PROMPT=0 git -C "$dir" pull $GIT_QUIET_FLAG
         else
             warn "$(basename $dir) already exists — skipping pull."
         fi
     else
-        git clone "$repo" "$dir" -q
+        git clone "$repo" "$dir" $GIT_QUIET_FLAG
     fi
 }
 
@@ -70,13 +78,13 @@ clone_or_pull "https://github.com/jamesWalker55/comfyui-various"         "$CUSTO
 clone_or_pull "https://github.com/rgthree/rgthree-comfy"                 "$CUSTOM_NODES/rgthree-comfy"
 clone_or_pull "https://github.com/kijai/ComfyUI-KJNodes"                 "$CUSTOM_NODES/ComfyUI-KJNodes"
 
-pip install -r "$CUSTOM_NODES/ComfyUI-WanVideoWrapper/requirements.txt"   -q
-pip install -r "$CUSTOM_NODES/ComfyUI-VideoHelperSuite/requirements.txt"   -q
-pip install -r "$CUSTOM_NODES/rgthree-comfy/requirements.txt"              -q
+pip install -r "$CUSTOM_NODES/ComfyUI-WanVideoWrapper/requirements.txt"   $PIP_QUIET_FLAG
+pip install -r "$CUSTOM_NODES/ComfyUI-VideoHelperSuite/requirements.txt"   $PIP_QUIET_FLAG
+pip install -r "$CUSTOM_NODES/rgthree-comfy/requirements.txt"              $PIP_QUIET_FLAG
 if [ -f "$CUSTOM_NODES/ComfyUI-KJNodes/requirements.txt" ]; then
-    pip install -r "$CUSTOM_NODES/ComfyUI-KJNodes/requirements.txt" -q
+    pip install -r "$CUSTOM_NODES/ComfyUI-KJNodes/requirements.txt" $PIP_QUIET_FLAG
 fi
-pip install librosa soundfile -q
+pip install librosa soundfile $PIP_QUIET_FLAG
 success "Custom nodes installed."
 
 # ── 7. Create model directories ──────────────────────────────────────────────
@@ -90,7 +98,7 @@ mkdir -p "$INSTALL_DIR/models/clip_vision"
 [ -n "${HF_TOKEN:-}" ] || error "HF_TOKEN env var is not set. Export it before running this script (https://huggingface.co/settings/tokens)."
 
 info "Installing huggingface_hub..."
-pip install -U huggingface_hub -q
+pip install -U huggingface_hub $PIP_QUIET_FLAG
 
 # ── 9. Download models (using Python API) ────────────────────────────────────
 info "Downloading Wan2.2 Remix models (very large files — ~30 GB total)..."
