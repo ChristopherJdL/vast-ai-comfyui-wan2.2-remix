@@ -91,7 +91,7 @@ download_model() {
         warn "$filename already exists — skipping download."
     else
         info "Downloading $filename..."
-        huggingface-cli download "$HF_REPO" "$hf_path"             --local-dir "$INSTALL_DIR/models/$subdir"             --local-dir-use-symlinks False             --token "$HF_TOKEN"
+        python -m huggingface_hub download "$HF_REPO" "$hf_path"             --local-dir "$INSTALL_DIR/models/$subdir"             --local-dir-use-symlinks False             --token "$HF_TOKEN"
     fi
 }
 
@@ -107,7 +107,7 @@ if [ -f "$VAE_DEST" ]; then
     warn "wan_2.1_vae.safetensors already exists — skipping."
 else
     info "Downloading Wan2.1 VAE..."
-    huggingface-cli download Wan-AI/Wan2.1-T2V-14B         "Wan2.1_VAE.pth"         --local-dir "$INSTALL_DIR/models/vae"         --local-dir-use-symlinks False         --token "$HF_TOKEN"
+    python -m huggingface_hub download Wan-AI/Wan2.1-T2V-14B         "Wan2.1_VAE.pth"         --local-dir "$INSTALL_DIR/models/vae"         --local-dir-use-symlinks False         --token "$HF_TOKEN"
     mv "$INSTALL_DIR/models/vae/Wan2.1_VAE.pth" "$VAE_DEST" 2>/dev/null || true
 fi
 
