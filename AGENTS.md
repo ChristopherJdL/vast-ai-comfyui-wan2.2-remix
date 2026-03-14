@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This project automates deployment of an uncensored AI video workflow using ComfyUI on **Vast.ai** GPU instances.
+This project automates deployment of a Wan2.2 Remix AI video workflow using ComfyUI on **Vast.ai** GPU instances.
 
 ## Context
 
@@ -15,5 +15,11 @@ This project automates deployment of an uncensored AI video workflow using Comfy
 - PyTorch installed with CUDA 12.1 support (compatible with host CUDA 12.x drivers).
 - Model weights require a **HuggingFace token** at install time.
 
+## Instance requirements
 
+- **GPU**: A100 or equivalent with 80GB VRAM recommended (14B model).
+- **Disk**: At least 60 GB free (~30 GB models + ~15 GB PyTorch/deps).
+- **Port 8188**: Must be exposed in Vast.ai instance configuration.
+- **Volume**: Attach a persistent volume to `/workspace` to keep data across instance restarts. Without a volume, everything is lost when the instance stops.
+- **CUDA**: Host driver must be CUDA 12.x compatible.
 
