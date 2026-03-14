@@ -10,21 +10,60 @@ INSTALL_DIR="/workspace/comfyui"
 COMFYUI_PORT=8188
 LOG_FILE="${INSTALL_DIR}/comfyui.log"
 PID_FILE="${INSTALL_DIR}/comfyui.pid"
+KILL_WAIT_SECONDS="${KILL_WAIT_SECONDS:-10}"
+
+get_pid_by_port() {
+    local port="$1"
+    if command -v lsof >/dev/null 2>&1; then
+        lsof -tiTCP:"$port" -sTCP:LISTEN 2>/dev/null || true
+    elif command -v ss >/dev/null 2>&1; then
+        ss -lptn "sport = :$port" 2>/dev/null | sed -n 's/.*pid=\([0-9]\+\).*/\1/p' | head -1
+    else
+        echo ""
+    fi
+}
+
+stop_comfyui() {
+    local pid="${1:-}"
+    if [ -z "$pid" ]; then
+        return 0
+    fi
+    if kill -0 "$pid" 2>/dev/null; then
+        log "Stopping ComfyUI (PID $pid)..."
+        kill "$pid" 2>/dev/null || true
+        local waited=0
+        while kill -0 "$pid" 2>/dev/null && [ "$waited" -lt "$KILL_WAIT_SECONDS" ]; do
+            sleep 1
+            waited=$(( waited + 1 ))
+        done
+        if kill -0 "$pid" 2>/dev/null; then
+            warn "Process $pid still running — sending SIGKILL."
+            kill -9 "$pid" 2>/dev/null || true
+        fi
+    fi
+}
 
 # ── Guard: ComfyUI directory ──────────────────────────────────────────────────
 [ -d "$INSTALL_DIR" ] || error "ComfyUI not found at $INSTALL_DIR. Run install_comfyui.sh first."
 [ -f "$INSTALL_DIR/main.py" ] || error "main.py not found. Installation may be incomplete."
 
 # ── Stop existing instance ────────────────────────────────────────────────────
+PID_FROM_FILE=""
 if [ -f "$PID_FILE" ]; then
-    OLD_PID=$(cat "$PID_FILE")
-    if kill -0 "$OLD_PID" 2>/dev/null; then
-        log "Restarting ComfyUI (PID $OLD_PID)..."
-        kill "$OLD_PID"
-        sleep 2
-    fi
-    rm -f "$PID_FILE"
+    PID_FROM_FILE=$(cat "$PID_FILE" 2>/dev/null || true)
 fi
+
+PID_FROM_PORT=$(get_pid_by_port "$COMFYUI_PORT")
+
+if [ -n "$PID_FROM_FILE" ] || [ -n "$PID_FROM_PORT" ]; then
+    log "Restarting ComfyUI..."
+fi
+
+stop_comfyui "$PID_FROM_FILE"
+if [ -n "$PID_FROM_PORT" ] && [ "$PID_FROM_PORT" != "$PID_FROM_FILE" ]; then
+    stop_comfyui "$PID_FROM_PORT"
+fi
+rm -f "$PID_FILE"
 
 # ── Detect VRAM and set flags ─────────────────────────────────────────────────
 EXTRA_FLAGS=""
