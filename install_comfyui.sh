@@ -83,12 +83,13 @@ pip install -U huggingface_hub -q
 info "Downloading Wan2.2 Remix models (very large files — ~30 GB total)..."
 
 hf_download() {
-    local repo="$1" hf_path="$2" local_dir="$3" filename="$4"
-    local dest="$local_dir/$filename"
-    if [ -f "$dest" ]; then
-        warn "$filename already exists — skipping download."
+    local repo="$1" hf_path="$2" local_dir="$3"
+    local basename="${hf_path##*/}"
+    # Check if file exists anywhere under the target directory
+    if find "$local_dir" -name "$basename" -type f 2>/dev/null | grep -q .; then
+        warn "$basename already exists — skipping download."
     else
-        info "Downloading $filename..."
+        info "Downloading $basename..."
         python -c "
 from huggingface_hub import hf_hub_download
 hf_hub_download(
@@ -103,18 +104,15 @@ hf_hub_download(
 
 hf_download "FX-FeiHou/wan2.2-Remix" \
     "NSFW/Wan2.2_Remix_NSFW_i2v_14b_high_lighting_v2.0.safetensors" \
-    "$INSTALL_DIR/models/diffusion_models" \
-    "NSFW/Wan2.2_Remix_NSFW_i2v_14b_high_lighting_v2.0.safetensors"
+    "$INSTALL_DIR/models/diffusion_models"
 
 hf_download "FX-FeiHou/wan2.2-Remix" \
     "NSFW/Wan2.2_Remix_NSFW_i2v_14b_low_lighting_v2.0.safetensors" \
-    "$INSTALL_DIR/models/diffusion_models" \
-    "NSFW/Wan2.2_Remix_NSFW_i2v_14b_low_lighting_v2.0.safetensors"
+    "$INSTALL_DIR/models/diffusion_models"
 
-hf_download "FX-FeiHou/wan2.2-Remix" \
-    "NSFW/nsfw_wan_umt5-xxl_fp8_scaled.safetensors" \
-    "$INSTALL_DIR/models/text_encoders" \
-    "NSFW/nsfw_wan_umt5-xxl_fp8_scaled.safetensors"
+hf_download "NSFW-API/NSFW-Wan-UMT5-XXL" \
+    "nsfw_wan_umt5-xxl_fp8_scaled.safetensors" \
+    "$INSTALL_DIR/models/text_encoders"
 
 # VAE from the official Wan2.1 repo
 VAE_DEST="$INSTALL_DIR/models/vae/wan_2.1_vae.safetensors"
